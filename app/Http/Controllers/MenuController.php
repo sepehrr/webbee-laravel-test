@@ -93,6 +93,19 @@ class MenuController extends BaseController
 
     public function getMenuItems()
     {
-        return MenuItem::with('children')->whereNull('parent_id')->get();
+        // Works but makes one query per level
+        // return MenuItem::with('children')->whereNull('parent_id')->get();
+        $menuItems = MenuItem::get();
+        $menuItems = $this->buildTree($menuItems, null);
+        return $menuItems;
+    }
+
+    private function buildTree($menuItems, $parent_id = null)
+    {
+        $children = $menuItems->where('parent_id', $parent_id);
+        foreach ($children as $child) {
+            $child->children = $this->buildTree($menuItems, $child->id);
+        }
+        return $children->values()->toArray();
     }
 }
